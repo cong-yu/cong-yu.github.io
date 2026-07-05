@@ -151,6 +151,14 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// iOS Safari trusts a touch/click gesture to unlock Web Audio far more
+// reliably than a keydown from an external keyboard, so grab the first tap
+// anywhere on the page (even one unrelated to gameplay, e.g. focusing the
+// name field) as an extra chance to unlock audio.
+['touchstart', 'touchend', 'mousedown', 'click'].forEach((eventName) => {
+  window.addEventListener(eventName, ensureAudio, { once: true });
+});
+
 pauseBtn.addEventListener('click', () => {
   ensureAudio();
   if (state === STATE.PLAYING) {
