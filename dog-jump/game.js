@@ -184,12 +184,25 @@ function rectsOverlap(a, b) {
 }
 
 let audioCtx = null;
+let audioUnlocked = false;
 
 function ensureAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
   if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // iOS Safari can leave Web Audio silent even after resume() unless an actual
+  // sound is started synchronously inside the gesture handler - this silent
+  // buffer forces the audio hardware to fully unlock on the first tap/keypress.
+  if (!audioUnlocked) {
+    const silentBuffer = audioCtx.createBuffer(1, 1, 22050);
+    const source = audioCtx.createBufferSource();
+    source.buffer = silentBuffer;
+    source.connect(audioCtx.destination);
+    source.start(0);
+    audioUnlocked = true;
+  }
 }
 
 function playTone(freq, duration, type, volume) {
