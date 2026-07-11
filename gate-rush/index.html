@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Gate Rush</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="game-wrap">
+    <div class="toolbar">
+      <input id="playerName" maxlength="16" placeholder="Your name" />
+      <button id="pauseBtn">Pause</button>
+    </div>
+
+    <div id="board" class="board">
+      <div class="hud">
+        <span id="livesDisplay">Lives: 3</span>
+        <span id="scoreDisplay">Score: 0</span>
+      </div>
+
+      <div id="queue" class="queue"></div>
+      <div id="terminals" class="terminals"></div>
+
+      <div id="startOverlay" class="overlay">
+        <h1>Gate Rush</h1>
+        <p class="subtitle">Tap an incoming flight, then tap an open gate in its terminal!</p>
+        <p class="hint">Each terminal only takes its own flights. Don't let flights time out - you have 3 lives.</p>
+        <div id="leaderboardStart" class="leaderboard"></div>
+        <p id="yourBestStart" class="your-best"></p>
+        <button id="startBtn" class="primary-btn">Start Game</button>
+      </div>
+
+      <div id="victoryOverlay" class="overlay hidden">
+        <h1>🎉 <span id="victoryScore"></span> Points! 🎉</h1>
+        <div id="leaderboardVictory" class="leaderboard"></div>
+        <button id="continueBtn" class="primary-btn">Keep Playing</button>
+      </div>
+
+      <div id="gameOverOverlay" class="overlay hidden">
+        <h1>Game Over</h1>
+        <p class="subtitle">Score: <span id="finalScore"></span></p>
+        <div id="leaderboardGameOver" class="leaderboard"></div>
+        <p id="yourBestGameOver" class="your-best"></p>
+        <button id="restartBtn" class="primary-btn">Play Again</button>
+      </div>
+
+      <div id="pauseOverlay" class="overlay hidden">
+        <h1>Paused</h1>
+      </div>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
