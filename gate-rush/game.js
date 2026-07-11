@@ -89,9 +89,46 @@ function assignGateSizes(gateCount) {
   return shuffleArray(sizes);
 }
 
+const CLASS_RANK = { regional: 1, domestic: 2, international: 3 };
+const GATE_CLASS_ICON = { regional: '🛩️', domestic: '🏠', international: '🌍' };
+const CLASS_WEIGHTS = [
+  ['regional', 0.4],
+  ['domestic', 0.35],
+  ['international', 0.25],
+];
+
+function weightedRandomClass() {
+  let r = Math.random();
+  for (const [flightClass, weight] of CLASS_WEIGHTS) {
+    if (r < weight) return flightClass;
+    r -= weight;
+  }
+  return 'international';
+}
+
+function assignGateClasses(gateCount) {
+  const classes = ['regional', 'domestic', 'international']; // every terminal is guaranteed one of each
+  while (classes.length < gateCount) {
+    classes.push(weightedRandomClass());
+  }
+  return shuffleArray(classes);
+}
+
 for (const terminal of TERMINALS) {
   const sizes = assignGateSizes(terminal.gateCount);
-  terminal.gates = sizes.map((size) => ({ status: 'open', timer: 0, size }));
+  const classes = assignGateClasses(terminal.gateCount);
+  const gates = sizes.map((size, i) => ({ status: 'open', timer: 0, size, class: classes[i] }));
+
+  // Size and class are rolled independently, so it's possible no single gate is
+  // both large and international - guarantee one "fits anything" gate per terminal
+  // so a large+international flight is never permanently unplaceable.
+  if (!gates.some((g) => g.size === 'large' && g.class === 'international')) {
+    const patched = gates[Math.floor(Math.random() * gates.length)];
+    patched.size = 'large';
+    patched.class = 'international';
+  }
+
+  terminal.gates = gates;
   terminal.gateEls = [];
 }
 
@@ -297,12 +334,14 @@ function pickWeightedTerminal() {
 }
 
 const SIZE_BADGE_LABEL = { small: 'S', medium: 'M', large: 'L' };
+const CLASS_BADGE_LABEL = { regional: '🛩️ Reg', domestic: '🏠 Dom', international: '🌍 Intl' };
 
 function spawnFlight() {
   const terminal = pickWeightedTerminal();
   const airline = terminal.airlines[Math.floor(Math.random() * terminal.airlines.length)];
   const isVIP = Math.random() < VIP_CHANCE;
   const size = weightedRandomSize();
+  const flightClass = weightedRandomClass();
   const maxCountdown = isVIP ? currentFlightCountdown() * VIP_COUNTDOWN_MULTIPLIER : currentFlightCountdown();
   const points = isVIP ? terminal.points * VIP_POINTS_MULTIPLIER : terminal.points;
 
@@ -332,6 +371,11 @@ function spawnFlight() {
   airlineEl.textContent = airline;
   el.appendChild(airlineEl);
 
+  const classBadge = document.createElement('div');
+  classBadge.className = `class-badge class-${flightClass}`;
+  classBadge.textContent = CLASS_BADGE_LABEL[flightClass];
+  el.appendChild(classBadge);
+
   const track = document.createElement('div');
   track.className = 'countdown-track';
   const fill = document.createElement('div');
@@ -339,7 +383,7 @@ function spawnFlight() {
   track.appendChild(fill);
   el.appendChild(track);
 
-  const flight = { id: flightIdCounter++, terminal, airline, points, isVIP, size, countdown: maxCountdown, maxCountdown, el, fill };
+  const flight = { id: flightIdCounter++, terminal, airline, points, isVIP, size, class: flightClass, countdown: maxCountdown, maxCountdown, el, fill };
   el.addEventListener('click', () => handleFlightClick(flight));
 
   flights.push(flight);
@@ -368,6 +412,7 @@ function handleGateClick(terminal, index) {
   const gate = terminal.gates[index];
   if (gate.status !== 'open') return;
   if (GATE_SIZE_RANK[gate.size] < GATE_SIZE_RANK[flight.size]) return;
+  if (CLASS_RANK[gate.class] < CLASS_RANK[flight.class]) return;
 
   const isWeather = weatherTerminalId === terminal.id;
   gate.status = 'occupied';
@@ -397,7 +442,9 @@ function updateSelectionVisuals() {
       const gate = terminal.gates[i];
       const isOpen = gate.status === 'open';
       const isBigEnough = !!selectedFlight && GATE_SIZE_RANK[gate.size] >= GATE_SIZE_RANK[selectedFlight.size];
-      const isTargetable = !!selectedFlight && selectedFlight.terminal.id === terminal.id && isOpen && isBigEnough;
+      const hasClearance = !!selectedFlight && CLASS_RANK[gate.class] >= CLASS_RANK[selectedFlight.class];
+      const isTargetable =
+        !!selectedFlight && selectedFlight.terminal.id === terminal.id && isOpen && isBigEnough && hasClearance;
       gateEl.classList.toggle('targetable', isTargetable);
       gateEl.classList.toggle('dimmed', !!selectedFlight && !isTargetable);
     });
@@ -515,7 +562,8 @@ function render() {
       const gate = terminal.gates[i];
       gateEl.classList.toggle('occupied', gate.status === 'occupied');
       gateEl.classList.toggle('closed', gate.status === 'closed');
-      gateEl.textContent = gate.status === 'occupied' ? '✈️' : gate.status === 'closed' ? '🚧' : '';
+      gateEl.textContent =
+        gate.status === 'occupied' ? '✈️' : gate.status === 'closed' ? '🚧' : GATE_CLASS_ICON[gate.class];
     });
   }
 

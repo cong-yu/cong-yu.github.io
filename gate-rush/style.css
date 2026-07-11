@@ -155,10 +155,32 @@ html, body {
 .flight-card .airline {
   font-size: 13px;
   font-weight: bold;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.class-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  color: #222;
+}
+
+.class-badge.class-regional {
+  background: #d9c2a3;
+}
+
+.class-badge.class-domestic {
+  background: #9ad0c2;
+}
+
+.class-badge.class-international {
+  background: #a3c0e6;
 }
 
 .flight-card .countdown-track {
