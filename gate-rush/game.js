@@ -415,10 +415,15 @@ function handleGateClick(terminal, index) {
   if (CLASS_RANK[gate.class] < CLASS_RANK[flight.class]) return;
 
   const isWeather = weatherTerminalId === terminal.id;
+  const isPerfectMatch = gate.size === flight.size && gate.class === flight.class;
   gate.status = 'occupied';
   gate.timer = isWeather ? terminal.turnaround * WEATHER_TURNAROUND_MULTIPLIER : terminal.turnaround;
-  score += flight.points;
-  playAssignSound();
+  if (isPerfectMatch) {
+    score += flight.points;
+    playAssignSound();
+  } else {
+    playPartialSound();
+  }
   removeFlight(flight);
   selectedFlightId = null;
   updateSelectionVisuals();
@@ -445,7 +450,10 @@ function updateSelectionVisuals() {
       const hasClearance = !!selectedFlight && CLASS_RANK[gate.class] >= CLASS_RANK[selectedFlight.class];
       const isTargetable =
         !!selectedFlight && selectedFlight.terminal.id === terminal.id && isOpen && isBigEnough && hasClearance;
+      const isPerfect =
+        isTargetable && gate.size === selectedFlight.size && gate.class === selectedFlight.class;
       gateEl.classList.toggle('targetable', isTargetable);
+      gateEl.classList.toggle('perfect', isPerfect);
       gateEl.classList.toggle('dimmed', !!selectedFlight && !isTargetable);
     });
   }
@@ -662,6 +670,10 @@ function playTone(freq, duration, type, volume) {
 
 function playAssignSound() {
   playTone(880, 0.15, 'sine', 0.12);
+}
+
+function playPartialSound() {
+  playTone(340, 0.14, 'triangle', 0.1);
 }
 
 function playMissSound() {

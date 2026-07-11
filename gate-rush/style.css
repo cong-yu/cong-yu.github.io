@@ -296,6 +296,17 @@ html, body {
   animation: pulse 0.8s infinite;
 }
 
+.gate.perfect {
+  border-color: #b8860b;
+  box-shadow: 0 0 0 4px #ffd700, 0 0 10px 2px rgba(255, 215, 0, 0.7);
+  animation: perfectPulse 0.8s infinite;
+}
+
+@keyframes perfectPulse {
+  0%, 100% { box-shadow: 0 0 0 4px #ffd700, 0 0 10px 2px rgba(255, 215, 0, 0.7); }
+  50% { box-shadow: 0 0 0 7px #ffd700, 0 0 16px 4px rgba(255, 215, 0, 0.9); }
+}
+
 .gate.dimmed {
   opacity: 0.25;
   filter: grayscale(70%);
