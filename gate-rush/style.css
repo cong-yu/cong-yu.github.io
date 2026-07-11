@@ -117,13 +117,39 @@ html, body {
 }
 
 .flight-card .terminal-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: bold;
   color: #fff;
   padding: 2px 6px;
   border-radius: 4px;
   margin-bottom: 4px;
+}
+
+.size-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: bold;
+  color: #222;
+}
+
+.size-badge.size-small {
+  background: #b7e4c7;
+}
+
+.size-badge.size-medium {
+  background: #ffe08a;
+}
+
+.size-badge.size-large {
+  background: #f4a261;
 }
 
 .flight-card .airline {
@@ -192,6 +218,7 @@ html, body {
 .gates {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 6px;
 }
 
@@ -207,6 +234,25 @@ html, body {
   font-size: 16px;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
+}
+
+.gate.size-small {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+}
+
+.gate.size-medium {
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+}
+
+.gate.size-large {
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
 }
 
 .gate.occupied {

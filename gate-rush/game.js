@@ -57,8 +57,41 @@ const TERMINALS = [
   },
 ];
 
+const GATE_SIZE_RANK = { small: 1, medium: 2, large: 3 };
+const SIZE_WEIGHTS = [
+  ['small', 0.4],
+  ['medium', 0.35],
+  ['large', 0.25],
+];
+
+function weightedRandomSize() {
+  let r = Math.random();
+  for (const [size, weight] of SIZE_WEIGHTS) {
+    if (r < weight) return size;
+    r -= weight;
+  }
+  return 'large';
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function assignGateSizes(gateCount) {
+  const sizes = ['small', 'medium', 'large']; // every terminal is guaranteed one of each
+  while (sizes.length < gateCount) {
+    sizes.push(weightedRandomSize());
+  }
+  return shuffleArray(sizes);
+}
+
 for (const terminal of TERMINALS) {
-  terminal.gates = Array.from({ length: terminal.gateCount }, () => ({ status: 'open', timer: 0 }));
+  const sizes = assignGateSizes(terminal.gateCount);
+  terminal.gates = sizes.map((size) => ({ status: 'open', timer: 0, size }));
   terminal.gateEls = [];
 }
 
@@ -188,7 +221,7 @@ function buildBoard() {
     gatesEl.className = 'gates';
     for (let i = 0; i < terminal.gateCount; i++) {
       const gateEl = document.createElement('div');
-      gateEl.className = 'gate';
+      gateEl.className = `gate size-${terminal.gates[i].size}`;
       gateEl.style.setProperty('--terminal-color', terminal.color);
       gateEl.addEventListener('click', () => handleGateClick(terminal, i));
       gatesEl.appendChild(gateEl);
@@ -263,10 +296,13 @@ function pickWeightedTerminal() {
   return TERMINALS[TERMINALS.length - 1];
 }
 
+const SIZE_BADGE_LABEL = { small: 'S', medium: 'M', large: 'L' };
+
 function spawnFlight() {
   const terminal = pickWeightedTerminal();
   const airline = terminal.airlines[Math.floor(Math.random() * terminal.airlines.length)];
   const isVIP = Math.random() < VIP_CHANCE;
+  const size = weightedRandomSize();
   const maxCountdown = isVIP ? currentFlightCountdown() * VIP_COUNTDOWN_MULTIPLIER : currentFlightCountdown();
   const points = isVIP ? terminal.points * VIP_POINTS_MULTIPLIER : terminal.points;
 
@@ -286,6 +322,11 @@ function spawnFlight() {
   tag.style.background = terminal.color;
   el.appendChild(tag);
 
+  const sizeBadge = document.createElement('span');
+  sizeBadge.className = `size-badge size-${size}`;
+  sizeBadge.textContent = SIZE_BADGE_LABEL[size];
+  tag.appendChild(sizeBadge);
+
   const airlineEl = document.createElement('div');
   airlineEl.className = 'airline';
   airlineEl.textContent = airline;
@@ -298,7 +339,7 @@ function spawnFlight() {
   track.appendChild(fill);
   el.appendChild(track);
 
-  const flight = { id: flightIdCounter++, terminal, airline, points, isVIP, countdown: maxCountdown, maxCountdown, el, fill };
+  const flight = { id: flightIdCounter++, terminal, airline, points, isVIP, size, countdown: maxCountdown, maxCountdown, el, fill };
   el.addEventListener('click', () => handleFlightClick(flight));
 
   flights.push(flight);
@@ -326,6 +367,7 @@ function handleGateClick(terminal, index) {
   if (flight.terminal.id !== terminal.id) return;
   const gate = terminal.gates[index];
   if (gate.status !== 'open') return;
+  if (GATE_SIZE_RANK[gate.size] < GATE_SIZE_RANK[flight.size]) return;
 
   const isWeather = weatherTerminalId === terminal.id;
   gate.status = 'occupied';
@@ -352,8 +394,10 @@ function updateSelectionVisuals() {
   const selectedFlight = flights.find((f) => f.id === selectedFlightId);
   for (const terminal of TERMINALS) {
     terminal.gateEls.forEach((gateEl, i) => {
-      const isOpen = terminal.gates[i].status === 'open';
-      const isTargetable = !!selectedFlight && selectedFlight.terminal.id === terminal.id && isOpen;
+      const gate = terminal.gates[i];
+      const isOpen = gate.status === 'open';
+      const isBigEnough = !!selectedFlight && GATE_SIZE_RANK[gate.size] >= GATE_SIZE_RANK[selectedFlight.size];
+      const isTargetable = !!selectedFlight && selectedFlight.terminal.id === terminal.id && isOpen && isBigEnough;
       gateEl.classList.toggle('targetable', isTargetable);
       gateEl.classList.toggle('dimmed', !!selectedFlight && !isTargetable);
     });
